@@ -24,16 +24,42 @@ def shingle(text, k):
 
     return shingle_set
 
+def unionize(articles):
+    vocab = set()
 
+    for article_id in articles:
+        vocab = vocab.union(articles[article_id])
+
+    return list(vocab)
+
+def one_hot_encoding(vocab, articles):
+    hot_encoded_articles = {}
+    for article_id in articles:
+        temp_hot_encoded = []
+        for x in vocab:
+            if x in articles[article_id]:
+                temp_hot_encoded.append(1)
+            else:
+                temp_hot_encoded.append(0)
+
+        hot_encoded_articles[article_id] = temp_hot_encoded
+
+    return hot_encoded_articles
 
 if __name__ == '__main__':
     small = "../input/news_articles_small.csv"
     large = "../input/news_articles_large.csv"
 
+    #TODO: Er staan soms echt heel rare tekens in de tekst, dit kan mss problemen geven voor latere shit
     articles = parse_csv(small)
 
     shingled_articles = {}
     for id in articles:
-        shingled_articles[id] = (shingle(articles[id], 2))
+        shingled_articles[id] = shingle(articles[id], 2)
 
-    print("hello there")
+    vocabulary = unionize(shingled_articles)
+
+    hot_encoded_articles = one_hot_encoding(vocabulary, articles)
+
+
+    print("hellow")
