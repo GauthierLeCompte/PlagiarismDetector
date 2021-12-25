@@ -91,7 +91,8 @@ if __name__ == '__main__':
         for article_id_2 in articles:
             jaccard.append(jaccard_similarity(articles[article_id_1], articles[article_id_2]))
 
-    #TODO: Barplot ma daar ben ik ni 100% me mee dus ik vraag ff aan nick
+    #TODO: Barplot ma daar ben ik ni 100% me mee dus ik vraag ff aan nick.
+    # Is da dan van elk article het gemiddelde jaccard??
 
     ### Calculate Shingles from articles
     shingled_articles = {}
