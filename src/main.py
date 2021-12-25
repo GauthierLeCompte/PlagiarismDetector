@@ -1,4 +1,5 @@
 import csv
+import matplotlib.pyplot as plt
 
 def parse_csv(article):
     """
@@ -77,10 +78,11 @@ def one_hot_encoding(vocab, articles):
     return hot_encoded_articles
 
 if __name__ == '__main__':
-    ### Parsing
+    ### Data Sets
     small = "../input/news_articles_small.csv"
     large = "../input/news_articles_large.csv"
 
+    ### Parsing
     articles = parse_csv(small)
 
     ### Calculate Jaccard Similarity from the articles
@@ -89,6 +91,7 @@ if __name__ == '__main__':
         for article_id_2 in articles:
             jaccard.append(jaccard_similarity(articles[article_id_1], articles[article_id_2]))
 
+    #TODO: Barplot ma daar ben ik ni 100% me mee dus ik vraag ff aan nick
 
     ### Calculate Shingles from articles
     shingled_articles = {}
