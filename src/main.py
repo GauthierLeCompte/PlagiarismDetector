@@ -16,6 +16,17 @@ def parse_csv(article):
             line_count += 1
     return articles
 
+def jaccard_similarity(article1, article2):
+    """
+    Calculates the jaccard similarity between 2 articles
+    :param article1: article 1 we want to compare
+    :param article2: article 1 we want to compare
+    :return: jaccard similarity between article 1 and article 2
+    """
+    set1 = set(article1)
+    set2 = set(article2)
+    return float(len(set1.intersection(set2)) / len(set1.union(set2)))
+
 def shingle(text, k):
     """
     Shingling splits the text up into tokens of size k, with no duplicates
@@ -66,19 +77,28 @@ def one_hot_encoding(vocab, articles):
     return hot_encoded_articles
 
 if __name__ == '__main__':
+    ### Parsing
     small = "../input/news_articles_small.csv"
     large = "../input/news_articles_large.csv"
 
-    #TODO: Er staan soms echt heel rare tekens in de tekst, dit kan mss problemen geven voor latere shit
     articles = parse_csv(small)
 
+    ### Calculate Jaccard Similarity from the articles
+    jaccard = []
+    for article_id_1 in articles:
+        for article_id_2 in articles:
+            jaccard.append(jaccard_similarity(articles[article_id_1], articles[article_id_2]))
+
+
+    ### Calculate Shingles from articles
     shingled_articles = {}
     for id in articles:
         shingled_articles[id] = shingle(articles[id], 2)
 
+    ### Generate vocabulary from shingled articles
     vocabulary = unionize(shingled_articles)
 
+    ### Hot encoding of the articles
     hot_encoded_articles = one_hot_encoding(vocabulary, articles)
-
 
     print("hellow")
