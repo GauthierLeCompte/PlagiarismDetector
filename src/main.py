@@ -78,14 +78,13 @@ def one_hot_encoding(vocab, articles):
     return hot_encoded_articles
 
 if __name__ == '__main__':
-    ### Data Sets
     small = "../input/news_articles_small.csv"
     large = "../input/news_articles_large.csv"
 
     ### Parsing
     articles = parse_csv(small)
 
-    ### Calculate Jaccard Similarity from the articles
+    ### Jaccard Similarity
     jaccard = []
     for article_id_1 in articles:
         for article_id_2 in articles:
@@ -94,15 +93,15 @@ if __name__ == '__main__':
     #TODO: Barplot ma daar ben ik ni 100% me mee dus ik vraag ff aan nick.
     # Is da dan van elk article het gemiddelde jaccard??
 
-    ### Calculate Shingles from articles
+    ### Shingles
     shingled_articles = {}
     for id in articles:
         shingled_articles[id] = shingle(articles[id], 2)
 
-    ### Generate vocabulary from shingled articles
+    ### Generate vocabulary
     vocabulary = unionize(shingled_articles)
 
-    ### Hot encoding of the articles
+    ### Hot encoding
     hot_encoded_articles = one_hot_encoding(vocabulary, articles)
 
     print("hellow")
