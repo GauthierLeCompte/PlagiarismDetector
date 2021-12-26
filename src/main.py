@@ -112,6 +112,43 @@ def create_hash(hot_encoded_article, minhash_func, vocab):
                 break
     return signature
 
+def create_subvectors(signature, band):
+    """
+    Creates subvectors of the signature vector
+    :param signature: The signature vector we want to split
+    :param band: Amount of times we want to split up the vector
+    :return: The subvectors
+    """
+    length = len(signature)
+    subvectors = [signature[i * length // band: (i + 1) * length // band] for i in range(band)]
+
+    return subvectors
+
+def find_candidate_pairs(subvectors):
+    """
+    Returns all candidate pairs (subvectors with the same value)
+    :param subvectors: list of all the subvectors
+    :return: all candidate pairs
+    """
+    #TODO: Hmm not sure geeft heel veel resultaten terug
+    duplicates = set()
+
+    for article1 in subvectors:
+        for article2 in subvectors:
+            if article1 != article2:
+                for subvec1, subvec2 in zip(subvectors[article1], subvectors[article2]):
+                    if subvec1 == subvec2:
+                        temp_tuple1 = (article1, article2)
+                        temp_tuple2 = (article2, article1)
+                        if temp_tuple1 not in duplicates and temp_tuple2 not in duplicates:
+                            duplicates.add(temp_tuple1)
+                            print(f"Candidate pair: {subvec1} == {subvec2}")
+                        else:
+                            print(f"{temp_tuple1} zit er al in!!!!")
+                        # we only need one band to match
+                        break
+
+    return duplicates
 
 if __name__ == '__main__':
     small = "../input/news_articles_small.csv"
@@ -120,19 +157,16 @@ if __name__ == '__main__':
     ### Parsing
     articles = parse_csv(small)
 
-    ### Jaccard Similarity
-    jaccard = []
+    ### Jaccard Similarity, uitcommenten als ge ni hoeft te berekenen want duurt lang
+    '''jaccard = []
     for article_id_1 in articles:
         for article_id_2 in articles:
-            jaccard.append(jaccard_similarity(set(articles[article_id_1]), set(articles[article_id_2])))
-
-    #TODO: Barplot ma daar ben ik ni 100% me mee dus ik vraag ff aan nick.
-    # Is da dan van elk article het gemiddelde jaccard??
+            jaccard.append(jaccard_similarity(set(articles[article_id_1]), set(articles[article_id_2])))'''
 
     ### Shingles
     shingled_articles = {}
     for id in articles:
-        shingled_articles[id] = shingle(articles[id], 2)
+        shingled_articles[id] = shingle(articles[id], 10)
 
     ### Generate vocabulary
     vocabulary = unionize(shingled_articles)
@@ -147,10 +181,21 @@ if __name__ == '__main__':
     for article_id in hot_encoded_articles:
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
 
-    jaccard2 = []
+    # Jaccard vergelijkingstest minhash, uitcommenten als ge ni hoeft te berekenen want duurt lang
+    '''jaccard2 = []
     for article_id_1 in signatures:
         for article_id_2 in signatures:
             jaccard2.append(jaccard_similarity(set(signatures[article_id_1]), set(signatures[article_id_2])))
 
     for i in range(10):
-        print(f"Jaccard 1: {jaccard[i]} vs Jaccard 2: {jaccard2[i]}")
+        print(f"Jaccard 1: {jaccard[i]} vs Jaccard 2: {jaccard2[i]}")'''
+
+    # Locality Sensetive Hashing
+    subvectors = {}
+    for signature_id in signatures:
+        subvectors[signature_id] = create_subvectors(signatures[signature_id], 5)
+
+    candidate_pairs = find_candidate_pairs(subvectors)
+
+    x=9
+    print(x)
