@@ -18,7 +18,7 @@ def parse_csv(article):
             line_count += 1
     return articles
 
-def run_jaccard():
+def run_jaccard(articles):
     """
     Run jaccard similarity for all articles and call the function
     :return: dictionary where key's are the tuples and value the jaccard similarity
@@ -160,12 +160,10 @@ def find_candidate_pairs(subvectors):
                     if subvec1 == subvec2:
                         temp_tuple1 = (article1, article2)
                         temp_tuple2 = (article2, article1)
-                        if temp_tuple1 not in duplicates and temp_tuple2 not in duplicates:
-                            duplicates.add(temp_tuple1)
-                            print(f"Candidate pair: {subvec1} == {subvec2}")
+                        if temp_tuple1 in duplicates or temp_tuple2 in duplicates:
+                            pass
                         else:
-                            print(f"{temp_tuple1} zit er al in!!!!")
-                        # we only need one band to match
+                            duplicates.add(temp_tuple1)
                         break
 
     return duplicates
@@ -178,7 +176,7 @@ if __name__ == '__main__':
     articles = parse_csv(small)
 
     ### Jaccard Similarity
-    jaccard = run_jaccard()
+    jaccard = run_jaccard(articles)
 
     ### Shingles
     shingled_articles = shingle(articles, 2)
@@ -196,13 +194,10 @@ if __name__ == '__main__':
     for article_id in hot_encoded_articles:
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
 
-    # Jaccard vergelijkingstest minhash
-    '''jaccard2 = []
-    for article_id_1 in signatures:
-        for article_id_2 in signatures:
-            jaccard2.append(jaccard_similarity(set(signatures[article_id_1]), set(signatures[article_id_2])))
+    # Jaccard vs MinHash
+    jaccard2 = run_jaccard(signatures)
 
-    for i in range(10):
+    '''for i in jaccard:
         print(f"Jaccard 1: {jaccard[i]} vs Jaccard 2: {jaccard2[i]}")'''
 
     # Locality Sensetive Hashing
@@ -212,5 +207,3 @@ if __name__ == '__main__':
 
     candidate_pairs = find_candidate_pairs(subvectors)
 
-    x=9
-    print(x)
