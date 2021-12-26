@@ -207,3 +207,12 @@ if __name__ == '__main__':
 
     candidate_pairs = find_candidate_pairs(subvectors)
 
+    end_result = []
+    for pair in candidate_pairs:
+        score = jaccard2[pair]
+
+        if score >= 0.95:
+            end_result.append(pair)
+
+    x = 9
+
