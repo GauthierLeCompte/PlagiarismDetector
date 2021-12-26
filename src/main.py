@@ -18,6 +18,24 @@ def parse_csv(article):
             line_count += 1
     return articles
 
+def run_jaccard():
+    """
+    Run jaccard similarity for all articles and call the function
+    :return: dictionary where key's are the tuples and value the jaccard similarity
+    """
+    jaccard = {}
+    for article_id_1 in articles:
+        for article_id_2 in articles:
+            if article_id_1 != article_id_2:
+                temp_tuple1 = (article_id_1, article_id_2)
+                temp_tuple2 = (article_id_2, article_id_1)
+
+                if temp_tuple1 in jaccard or temp_tuple2 in jaccard:
+                    pass
+                else:
+                    jaccard[temp_tuple1] = jaccard_similarity(set(articles[article_id_1]), set(articles[article_id_2]))
+    return jaccard
+
 def jaccard_similarity(article1, article2):
     """
     Calculates the jaccard similarity between 2 articles
@@ -27,21 +45,23 @@ def jaccard_similarity(article1, article2):
     """
     return float(len(article1.intersection(article2)) / len(article1.union(article2)))
 
-def shingle(text, k):
-    #TODO: in slide, als k=2 dan neemt ge 2 woorden ipv tekens, dus mss 2e functie maken want da ga wel
-    # andere results geven
+def shingle(articles, k):
     """
     Shingling splits the text up into tokens of size k, with no duplicates
-    :param text: The text we want to split up
+    :param articles: The articles we want to split up
     :param k: the length of the tokens
     :return: Set of all the shingles
     """
-    shingle_set = set()
+    shingled_articles = {}
+    for id in articles:
+        shingle_set = set()
+        text = articles[id]
 
-    for i in range(len(text) - k+1):
-        shingle_set.add(text[i:i+k])
+        for i in range(len(text) - k): # K+1 ofni?
+            shingle_set.add(text[i:i+k])
+        shingled_articles[id] = shingle_set
 
-    return shingle_set
+    return shingled_articles
 
 def unionize(articles):
     """
@@ -157,16 +177,11 @@ if __name__ == '__main__':
     ### Parsing
     articles = parse_csv(small)
 
-    ### Jaccard Similarity, uitcommenten als ge ni hoeft te berekenen want duurt lang
-    '''jaccard = []
-    for article_id_1 in articles:
-        for article_id_2 in articles:
-            jaccard.append(jaccard_similarity(set(articles[article_id_1]), set(articles[article_id_2])))'''
+    ### Jaccard Similarity
+    jaccard = run_jaccard()
 
     ### Shingles
-    shingled_articles = {}
-    for id in articles:
-        shingled_articles[id] = shingle(articles[id], 10)
+    shingled_articles = shingle(articles, 2)
 
     ### Generate vocabulary
     vocabulary = unionize(shingled_articles)
@@ -181,7 +196,7 @@ if __name__ == '__main__':
     for article_id in hot_encoded_articles:
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
 
-    # Jaccard vergelijkingstest minhash, uitcommenten als ge ni hoeft te berekenen want duurt lang
+    # Jaccard vergelijkingstest minhash
     '''jaccard2 = []
     for article_id_1 in signatures:
         for article_id_2 in signatures:
@@ -193,7 +208,7 @@ if __name__ == '__main__':
     # Locality Sensetive Hashing
     subvectors = {}
     for signature_id in signatures:
-        subvectors[signature_id] = create_subvectors(signatures[signature_id], 5)
+        subvectors[signature_id] = create_subvectors(signatures[signature_id], 10)
 
     candidate_pairs = find_candidate_pairs(subvectors)
 
