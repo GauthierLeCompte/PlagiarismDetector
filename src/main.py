@@ -1,6 +1,8 @@
 import csv
 from random import shuffle
 # import matplotlib.pyplot as plt
+from datetime import datetime
+
 
 def parse_csv(article):
     """
@@ -194,6 +196,10 @@ def find_candidate_pairs(subvectors):
     return duplicates
 
 if __name__ == '__main__':
+    now = datetime.now()
+
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
     small = "../input/news_articles_small.csv"
     large = "../input/news_articles_large.csv"
 
@@ -241,4 +247,7 @@ if __name__ == '__main__':
 
     for x in end_result:
         print(x)
+    now = datetime.now()
 
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
