@@ -1,7 +1,11 @@
 import csv
+import math
 from random import shuffle
 # import matplotlib.pyplot as plt
 from datetime import datetime
+import numpy as np
+import matplotlib.pyplot as plt
+from textwrap import wrap
 
 
 def parse_csv(article):
@@ -202,17 +206,46 @@ def export_results(articles, candidate_pairs, jaccard, similarity):
         if score >= similarity:
             end_result[pair] = score
 
-    with open('../output/results.csv', 'w', newline='') as file:
+    with open('../output/results2.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Document Pair", "Score", "Text Article 1", "Text Article 2"])
 
         for pair in end_result:
             writer.writerow([pair, jaccard[pair], articles[pair[0]], articles[pair[1]]])
 
+def bar_plot(jaccard):
+    # creating the dataset
+    valuelist = []
+    for key in jaccard.keys():
+        value = jaccard[key]
+        valuelist.append(value*100)
+
+    bin_edges = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+
+    plt.hist(valuelist,
+             bins=bin_edges,
+             density=False,
+             histtype='bar',
+             color='b',
+             edgecolor='k',
+             alpha=0.5)
+
+
+    plt.xlabel("Similarity between chapters (in %)")
+    plt.xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+    plt.ylabel("Number of chapters")
+    plt.yscale('log')
+    plt.title("Number of chapters in function of their similarity witch each other (using +-1000 articles)")
+    title = plt.title("\n".join(wrap(
+        "Number of chapters in function of their similarity witch each other (using +-1000 articles)",
+        60)))
+
+    plt.show()
+    plt.savefig("histScore_shinling2.png")
+
 
 if __name__ == '__main__':
     now = datetime.now()
-
     current_time = now.strftime("%H:%M:%S")
     print("Current Time =", current_time)
     small = "../input/news_articles_small.csv"
@@ -239,12 +272,12 @@ if __name__ == '__main__':
     print(f"Length Hot Encoded Articles {len(hot_encoded_articles)}\n")
 
     ### Min Hash
-    minhash_func = build_minhash_func(vocabulary, 25)
+    minhash_func = build_minhash_func(vocabulary, 100)
     print(f"Minhash function calculated\n")
 
     signatures = {}
     for article_id in hot_encoded_articles:
-        print(f"Article hash: {article_id}")
+        # print(f"Article hash: {article_id}")
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
     print(f"Signatures created\n")
 
@@ -252,6 +285,8 @@ if __name__ == '__main__':
     jaccard2 = run_jaccard(hot_encoded_articles, False)
     print(f"Ran Jaccard 2\n")
 
+    bar_plot(jaccard2)
+    print(f"plot created")
     # Locality Sensetive Hashing
     subvectors = {}
     for signature_id in signatures:
@@ -263,3 +298,7 @@ if __name__ == '__main__':
 
     ### Export results
     export_results(articles, candidate_pairs, jaccard2, 0.8)
+
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
