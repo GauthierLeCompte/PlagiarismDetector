@@ -6,6 +6,8 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from textwrap import wrap
+import seaborn as sns
+import pandas as pd
 
 
 def parse_csv(article):
@@ -198,20 +200,27 @@ def find_candidate_pairs(subvectors):
 
     return duplicates
 
-def export_results(articles, candidate_pairs, jaccard, similarity):
+def export_results(candidate_pairs, jaccard, similarity):
     end_result = {}
+    scores = []
     for pair in candidate_pairs:
         score = jaccard[pair]
 
         if score >= similarity:
             end_result[pair] = score
+            scores.append(score)
 
-    with open('../output/results2.csv', 'w', newline='') as file:
+    with open('../output/results.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Document 1", "Document 2"])
 
         for pair in end_result:
             writer.writerow([pair[0], pair[1]])
+    return scores
+
+def probability(similarity, rows, bands):
+    return 1 - (1 - similarity ** rows) ** bands
+
 
 def bar_plot(jaccard):
     # creating the dataset
@@ -277,7 +286,7 @@ if __name__ == '__main__':
 
     signatures = {}
     for article_id in hot_encoded_articles:
-        # print(f"Article hash: {article_id}")
+        print(f"Article hash: {article_id}")
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
     print(f"Signatures created\n")
 
@@ -297,7 +306,22 @@ if __name__ == '__main__':
     print(f"Candidate Pairs found\n")
 
     ### Export results
-    export_results(articles, candidate_pairs, jaccard2, 0.8)
+    scores = export_results(candidate_pairs, jaccard2, 0.8)
+
+    results = pd.DataFrame({
+        'similarity': [],
+        'probability': [],
+        'rows, bands': []
+    })
+
+    for similarity in scores:
+        total = 100
+        for band in [100, 50, 25, 20, 10, 5, 4, 2, 1]:
+            rows = int(total / band)
+            probability = probability(similarity, rows, band)
+            results = results.append({'similarity': similarity,'probability': probability,'rows, bands': f"{rows},{band}"}, ignore_index=True)
+
+    sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands')
 
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
