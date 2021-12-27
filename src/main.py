@@ -18,7 +18,7 @@ def parse_csv(article):
             line_count += 1
     return articles
 
-def run_jaccard(articles):
+def run_jaccard(articles, sim=True):
     """
     Run jaccard similarity for all articles and call the function
     :return: dictionary where key's are the tuples and value the jaccard similarity
@@ -33,7 +33,11 @@ def run_jaccard(articles):
                 if temp_tuple1 in jaccard or temp_tuple2 in jaccard:
                     pass
                 else:
-                    jaccard[temp_tuple1] = jaccard_similarity(set(articles[article_id_1]), set(articles[article_id_2]))
+                    if sim:
+                        jaccard[temp_tuple1] = jaccard_similarity(set(articles[article_id_1]), set(articles[article_id_2]))
+                    else:
+                        jaccard[temp_tuple1] = jaccard_similarity_binary((articles[article_id_1]), (articles[article_id_2]))
+
     return jaccard
 
 def jaccard_similarity(article1, article2):
@@ -44,6 +48,27 @@ def jaccard_similarity(article1, article2):
     :return: jaccard similarity between article 1 and article 2
     """
     return float(len(article1.intersection(article2)) / len(article1.union(article2)))
+
+def jaccard_similarity_binary(article1, article2):
+    """
+    Calculates the jaccard similarity between 2 articles
+    :param article1: article 1 we want to compare
+    :param article2: article 1 we want to compare
+    :return: jaccard similarity between article 1 and article 2
+    """
+    union = 0
+    intersect = 0
+    maxlenght = len(article1)
+    for x in range(maxlenght):
+        i = article1[x]
+        j = article2[x]
+        if i == 1 or j == 1:
+            union +=1
+            if i == j:
+                intersect += 1
+    return float(intersect/union)
+
+
 
 def shingle(articles, k):
     """
@@ -128,7 +153,8 @@ def create_hash(hot_encoded_article, minhash_func, vocab):
             index = func.index(i)
             signature_val = hot_encoded_article[index]
             if signature_val == 1:
-                signature.append(index)
+                signature.append(i)
+                break
     return signature
 
 def create_subvectors(signature, band):
@@ -194,7 +220,7 @@ if __name__ == '__main__':
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
 
     # Jaccard vs MinHash
-    jaccard2 = run_jaccard(signatures)
+    jaccard2 = run_jaccard(hot_encoded_articles, False)
 
     '''for i in jaccard:
         print(f"Jaccard 1: {jaccard[i]} vs Jaccard 2: {jaccard2[i]}")'''
@@ -210,8 +236,9 @@ if __name__ == '__main__':
     for pair in candidate_pairs:
         score = jaccard2[pair]
 
-        if score >= 0.95:
+        if score >= 0.8:
             end_result.append(pair)
 
-    x = 9
+    for x in end_result:
+        print(x)
 
