@@ -208,10 +208,10 @@ def export_results(articles, candidate_pairs, jaccard, similarity):
 
     with open('../output/results2.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Document Pair", "Score", "Text Article 1", "Text Article 2"])
+        writer.writerow(["Document 1", "Document 2"])
 
         for pair in end_result:
-            writer.writerow([pair, jaccard[pair], articles[pair[0]], articles[pair[1]]])
+            writer.writerow([pair[0], pair[1]])
 
 def bar_plot(jaccard):
     # creating the dataset
