@@ -177,7 +177,6 @@ def find_candidate_pairs(subvectors):
     :param subvectors: list of all the subvectors
     :return: all candidate pairs
     """
-    #TODO: Hmm not sure geeft heel veel resultaten terug
     duplicates = set()
 
     for article1 in subvectors:
@@ -195,6 +194,22 @@ def find_candidate_pairs(subvectors):
 
     return duplicates
 
+def export_results(articles, candidate_pairs, similarity):
+    end_result = {}
+    for pair in candidate_pairs:
+        score = jaccard2[pair]
+
+        if score >= similarity:
+            end_result[pair] = score
+
+    with open('../output/results.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Document Pair", "Score", "Text Article 1", "Text Article 2"])
+
+        for pair in end_result:
+            writer.writerow([pair, score, articles[pair[0]], articles[pair[1]]])
+
+
 if __name__ == '__main__':
     now = datetime.now()
 
@@ -205,49 +220,46 @@ if __name__ == '__main__':
 
     ### Parsing
     articles = parse_csv(small)
+    print(f"Articles Parsed\n")
 
     ### Jaccard Similarity
     jaccard = run_jaccard(articles)
+    print(f"Jaccard similarity\n")
 
     ### Shingles
     shingled_articles = shingle(articles, 2)
+    print(f"Length Shingles {len(shingled_articles)}\n")
 
     ### Generate vocabulary
     vocabulary = unionize(shingled_articles)
+    print(f"Vocab length {len(vocabulary)}\n")
 
     ### Hot encoding
     hot_encoded_articles = one_hot_encoding(vocabulary, shingled_articles)
+    print(f"Length Hot Encoded Articles {len(hot_encoded_articles)}\n")
 
     ### Min Hash
-    minhash_func = build_minhash_func(vocabulary, 100)
+    minhash_func = build_minhash_func(vocabulary, 25)
+    print(f"Minhash function calculated\n")
 
     signatures = {}
     for article_id in hot_encoded_articles:
+        print(f"Article hash: {article_id}")
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
+    print(f"Signatures created\n")
 
-    # Jaccard vs MinHash
+    ### Jaccard vs MinHash
     jaccard2 = run_jaccard(hot_encoded_articles, False)
-
-    '''for i in jaccard:
-        print(f"Jaccard 1: {jaccard[i]} vs Jaccard 2: {jaccard2[i]}")'''
+    print(f"Ran Jaccard 2\n")
 
     # Locality Sensetive Hashing
     subvectors = {}
     for signature_id in signatures:
         subvectors[signature_id] = create_subvectors(signatures[signature_id], 10)
+    print(f"Subvectors created\n")
 
     candidate_pairs = find_candidate_pairs(subvectors)
+    print(f"Candidate Pairs found\n")
 
-    end_result = []
-    for pair in candidate_pairs:
-        score = jaccard2[pair]
-
-        if score >= 0.8:
-            end_result.append(pair)
-
-    for x in end_result:
-        print(x)
-    now = datetime.now()
-
-    current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time)
+    ### Export results
+    export_results(articles, candidate_pairs, 0.8)
