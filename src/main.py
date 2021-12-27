@@ -207,7 +207,7 @@ def export_results(articles, candidate_pairs, similarity):
         writer.writerow(["Document Pair", "Score", "Text Article 1", "Text Article 2"])
 
         for pair in end_result:
-            writer.writerow([pair, score, articles[pair[0]], articles[pair[1]]])
+            writer.writerow([pair, jaccard2[pair], articles[pair[0]], articles[pair[1]]])
 
 
 if __name__ == '__main__':
@@ -262,4 +262,7 @@ if __name__ == '__main__':
     print(f"Candidate Pairs found\n")
 
     ### Export results
-    export_results(articles, candidate_pairs, 0.8)
+    export_results(articles, candidate_pairs, jaccard2, 0.8)
+
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
