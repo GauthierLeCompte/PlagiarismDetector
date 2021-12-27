@@ -194,10 +194,10 @@ def find_candidate_pairs(subvectors):
 
     return duplicates
 
-def export_results(articles, candidate_pairs, similarity):
+def export_results(articles, candidate_pairs, jaccard, similarity):
     end_result = {}
     for pair in candidate_pairs:
-        score = jaccard2[pair]
+        score = jaccard[pair]
 
         if score >= similarity:
             end_result[pair] = score
@@ -207,7 +207,7 @@ def export_results(articles, candidate_pairs, similarity):
         writer.writerow(["Document Pair", "Score", "Text Article 1", "Text Article 2"])
 
         for pair in end_result:
-            writer.writerow([pair, jaccard2[pair], articles[pair[0]], articles[pair[1]]])
+            writer.writerow([pair, jaccard[pair], articles[pair[0]], articles[pair[1]]])
 
 
 if __name__ == '__main__':
@@ -263,6 +263,3 @@ if __name__ == '__main__':
 
     ### Export results
     export_results(articles, candidate_pairs, jaccard2, 0.8)
-
-    current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time)
