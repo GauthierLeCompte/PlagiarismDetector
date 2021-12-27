@@ -1,6 +1,6 @@
 import csv
 from random import shuffle
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 def parse_csv(article):
     """
@@ -128,8 +128,7 @@ def create_hash(hot_encoded_article, minhash_func, vocab):
             index = func.index(i)
             signature_val = hot_encoded_article[index]
             if signature_val == 1:
-                signature.append(i)
-                break
+                signature.append(index)
     return signature
 
 def create_subvectors(signature, band):
@@ -185,7 +184,7 @@ if __name__ == '__main__':
     vocabulary = unionize(shingled_articles)
 
     ### Hot encoding
-    hot_encoded_articles = one_hot_encoding(vocabulary, articles)
+    hot_encoded_articles = one_hot_encoding(vocabulary, shingled_articles)
 
     ### Min Hash
     minhash_func = build_minhash_func(vocabulary, 100)
