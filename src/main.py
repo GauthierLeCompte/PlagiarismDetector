@@ -218,7 +218,7 @@ def export_results(candidate_pairs, jaccard, similarity):
             writer.writerow([pair[0], pair[1]])
     return scores
 
-def probability(similarity, rows, bands):
+def calc_probability(similarity, rows, bands):
     return 1 - (1 - similarity ** rows) ** bands
 
 
@@ -251,7 +251,7 @@ def bar_plot(jaccard):
 
     plt.show()
     plt.savefig("histScore_shinling2.png")
-
+    return valuelist
 
 if __name__ == '__main__':
     now = datetime.now()
@@ -286,7 +286,6 @@ if __name__ == '__main__':
 
     signatures = {}
     for article_id in hot_encoded_articles:
-        print(f"Article hash: {article_id}")
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
     print(f"Signatures created\n")
 
@@ -294,7 +293,7 @@ if __name__ == '__main__':
     jaccard2 = run_jaccard(hot_encoded_articles, False)
     print(f"Ran Jaccard 2\n")
 
-    bar_plot(jaccard2)
+    valuelist = bar_plot(jaccard2)
     print(f"plot created")
     # Locality Sensetive Hashing
     subvectors = {}
@@ -313,16 +312,15 @@ if __name__ == '__main__':
         'probability': [],
         'rows, bands': []
     })
-
     for similarity in scores:
         total = 100
         for band in [100, 50, 25, 20, 10, 5, 4, 2, 1]:
             rows = int(total / band)
-            probability = probability(similarity, rows, band)
+            probability = calc_probability(similarity, rows, band)
             results = results.append({'similarity': similarity,'probability': probability,'rows, bands': f"{rows},{band}"}, ignore_index=True)
 
     sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands')
-
+    plt.show()
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     print("Current Time =", current_time)
