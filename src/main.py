@@ -43,21 +43,33 @@ def run_jaccard(articles, binary=False):
                     pass
                 else:
                     if not binary:
-                        jaccard[temp_tuple1] = jaccard_similarity(set(articles[article_id_1]), set(articles[article_id_2]))
+                        jaccard[temp_tuple1] = jaccard_similarity(articles[article_id_1], articles[article_id_2])
                     else:
                         jaccard[temp_tuple1] = jaccard_similarity_binary((articles[article_id_1]), (articles[article_id_2]))
 
     return jaccard
 
 
-def jaccard_similarity(article1, article2):
+def jaccard_similarity(doc1, doc2):
     """
     Calculates the jaccard similarity between 2 articles
     :param article1: article 1 we want to compare
     :param article2: article 2 we want to compare
     :return: jaccard similarity between article 1 and article 2
     """
-    return float(len(article1.intersection(article2)) / len(article1.union(article2)))
+    # List the unique words in a document
+    words_doc1 = set(doc1.lower().split())
+    words_doc2 = set(doc2.lower().split())
+
+    # Find the intersection of words list of doc1 & doc2
+    intersection = words_doc1.intersection(words_doc2)
+
+    # Find the union of words list of doc1 & doc2
+    union = words_doc1.union(words_doc2)
+
+    # Calculate Jaccard similarity score
+    # using length of intersection set divided by length of union set
+    return float(len(intersection)) / len(union)
 
 
 def jaccard_similarity_binary(article1, article2):
@@ -277,7 +289,7 @@ if __name__ == '__main__':
     articles = parse_csv(small)
     print(f"Articles Parsed\n")
 
-    test = run_jaccard(articles)
+    jaccard = run_jaccard(articles)
     ### Shingles
     shingled_articles = shingle(articles, 2)
     print(f"Length Shingles {len(shingled_articles)}\n")
@@ -304,7 +316,7 @@ if __name__ == '__main__':
     print(f"Ran Jaccard 2\n")
 
     ### Create barplot
-    valuelist = bar_plot(jaccard2)
+    valuelist = bar_plot(jaccard)
     print(f"plot created")
 
     ### Locality Sensetive Hashing
@@ -319,7 +331,7 @@ if __name__ == '__main__':
     print(f"Lenght both: {len(candidate_pairs) + len(non_candidate_pairs)}")
 
     ### Export results
-    scores = export_results(candidate_pairs, jaccard2, 0.8)
+    scores = export_results(candidate_pairs, jaccard, 0.8)
 
     results = pd.DataFrame({
         'similarity': [],
