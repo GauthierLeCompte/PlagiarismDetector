@@ -212,7 +212,6 @@ def find_candidate_pairs(subvectors):
                     else:
                         non_candidates.add(temp_tuple1)
 
-    print(f"Lenght 1: {lenght1}/t Length 2: {length2}")
     return candidates, non_candidates
 
 def export_results(candidate_pairs, jaccard, similarity):
