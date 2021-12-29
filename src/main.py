@@ -26,7 +26,8 @@ def parse_csv(article):
             line_count += 1
     return articles
 
-def run_jaccard(articles, sim=True):
+
+def run_jaccard(articles, binary=False):
     """
     Run jaccard similarity for all articles and call the function
     :return: dictionary where key's are the tuples and value the jaccard similarity
@@ -41,24 +42,27 @@ def run_jaccard(articles, sim=True):
                 if temp_tuple1 in jaccard or temp_tuple2 in jaccard:
                     pass
                 else:
-                    if sim:
+                    if not binary:
                         jaccard[temp_tuple1] = jaccard_similarity(set(articles[article_id_1]), set(articles[article_id_2]))
                     else:
                         jaccard[temp_tuple1] = jaccard_similarity_binary((articles[article_id_1]), (articles[article_id_2]))
 
     return jaccard
 
+
 def jaccard_similarity(article1, article2):
     """
     Calculates the jaccard similarity between 2 articles
     :param article1: article 1 we want to compare
-    :param article2: article 1 we want to compare
+    :param article2: article 2 we want to compare
     :return: jaccard similarity between article 1 and article 2
     """
     return float(len(article1.intersection(article2)) / len(article1.union(article2)))
 
+
 def jaccard_similarity_binary(article1, article2):
     """
+    #TODO: Text hier nog aanpassen
     Calculates the jaccard similarity between 2 articles
     :param article1: article 1 we want to compare
     :param article2: article 1 we want to compare
@@ -77,7 +81,6 @@ def jaccard_similarity_binary(article1, article2):
     return float(intersect/union)
 
 
-
 def shingle(articles, k):
     """
     Shingling splits the text up into tokens of size k, with no duplicates
@@ -90,17 +93,18 @@ def shingle(articles, k):
         shingle_set = set()
         text = articles[id]
 
-        for i in range(len(text) - k): # K+1 ofni?
+        for i in range(len(text) - k):
             shingle_set.add(text[i:i+k])
         shingled_articles[id] = shingle_set
 
     return shingled_articles
 
+
 def unionize(articles):
     """
     Takes union of all the values in a dictionary
     :param articles: Dictionary of articles we want to take the union of
-    :return: a list of all the values
+    :return: a set of all the shingles
     """
     vocab = set()
 
@@ -108,6 +112,7 @@ def unionize(articles):
         vocab = vocab.union(articles[article_id])
 
     return list(vocab)
+
 
 def one_hot_encoding(vocab, articles):
     """
@@ -131,6 +136,7 @@ def one_hot_encoding(vocab, articles):
 
     return hot_encoded_articles
 
+
 def build_minhash_func(vocabulary, amount_hashes):
     """
     Builds vectors we use to compute the minhash function. Takes the vocabulary and shuffles it.
@@ -142,9 +148,9 @@ def build_minhash_func(vocabulary, amount_hashes):
     # function for building multiple minhash vectors
     hashes = []
     for i in range(amount_hashes):
-        hash_ex = list(range(1, len(vocabulary) + 1))
-        shuffle(hash_ex)
-        hashes.append(hash_ex)
+        shuffled_vocab = list(range(1, len(vocabulary) + 1))
+        shuffle(shuffled_vocab)
+        hashes.append(shuffled_vocab)
     return hashes
 
 def create_hash(hot_encoded_article, minhash_func, vocab):
@@ -183,22 +189,31 @@ def find_candidate_pairs(subvectors):
     :param subvectors: list of all the subvectors
     :return: all candidate pairs
     """
-    duplicates = set()
+    candidates = set()
+    non_candidates = set()
 
     for article1 in subvectors:
         for article2 in subvectors:
             if article1 != article2:
+                match = False
                 for subvec1, subvec2 in zip(subvectors[article1], subvectors[article2]):
+                    temp_tuple1 = (article1, article2)
+                    temp_tuple2 = (article2, article1)
                     if subvec1 == subvec2:
-                        temp_tuple1 = (article1, article2)
-                        temp_tuple2 = (article2, article1)
-                        if temp_tuple1 in duplicates or temp_tuple2 in duplicates:
+                        match += True
+                        if temp_tuple1 in candidates or temp_tuple2 in candidates:
                             pass
                         else:
-                            duplicates.add(temp_tuple1)
+                            candidates.add(temp_tuple1)
                         break
+                if not match:
+                    if temp_tuple1 in non_candidates or temp_tuple2 in non_candidates:
+                        pass
+                    else:
+                        non_candidates.add(temp_tuple1)
 
-    return duplicates
+    print(f"Lenght 1: {lenght1}/t Length 2: {length2}")
+    return candidates, non_candidates
 
 def export_results(candidate_pairs, jaccard, similarity):
     end_result = {}
@@ -220,7 +235,6 @@ def export_results(candidate_pairs, jaccard, similarity):
 
 def calc_probability(similarity, rows, bands):
     return 1 - (1 - similarity ** rows) ** bands
-
 
 def bar_plot(jaccard):
     # creating the dataset
@@ -264,10 +278,7 @@ if __name__ == '__main__':
     articles = parse_csv(small)
     print(f"Articles Parsed\n")
 
-    ### Jaccard Similarity
-    jaccard = run_jaccard(articles)
-    print(f"Jaccard similarity\n")
-
+    test = run_jaccard(articles)
     ### Shingles
     shingled_articles = shingle(articles, 2)
     print(f"Length Shingles {len(shingled_articles)}\n")
@@ -281,7 +292,7 @@ if __name__ == '__main__':
     print(f"Length Hot Encoded Articles {len(hot_encoded_articles)}\n")
 
     ### Min Hash
-    minhash_func = build_minhash_func(vocabulary, 100)
+    minhash_func = build_minhash_func(vocabulary, 25)
     print(f"Minhash function calculated\n")
 
     signatures = {}
@@ -289,20 +300,24 @@ if __name__ == '__main__':
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
     print(f"Signatures created\n")
 
-    ### Jaccard vs MinHash
+    ### Jaccard with hot encoded articles
     jaccard2 = run_jaccard(hot_encoded_articles, False)
     print(f"Ran Jaccard 2\n")
 
+    ### Create barplot
     valuelist = bar_plot(jaccard2)
     print(f"plot created")
-    # Locality Sensetive Hashing
+
+    ### Locality Sensetive Hashing
     subvectors = {}
     for signature_id in signatures:
         subvectors[signature_id] = create_subvectors(signatures[signature_id], 10)
     print(f"Subvectors created\n")
 
-    candidate_pairs = find_candidate_pairs(subvectors)
-    print(f"Candidate Pairs found\n")
+    candidate_pairs, non_candidate_pairs = find_candidate_pairs(subvectors)
+    print(f"Lenght Candidate pairs: {len(candidate_pairs)}" )
+    print(f"Lenght Non-Candidate pairs: {len(non_candidate_pairs)}")
+    print(f"Lenght both: {len(candidate_pairs) + len(non_candidate_pairs)}")
 
     ### Export results
     scores = export_results(candidate_pairs, jaccard2, 0.8)
@@ -317,10 +332,14 @@ if __name__ == '__main__':
         for band in [100, 50, 25, 20, 10, 5, 4, 2, 1]:
             rows = int(total / band)
             probability = calc_probability(similarity, rows, band)
-            results = results.append({'similarity': similarity,'probability': probability,'rows, bands': f"{rows},{band}"}, ignore_index=True)
+            results = results.append({
+                'similarity': similarity,
+                'probability': probability,
+                'rows, bands': f"{rows},{band}"},
+                ignore_index=True)
 
-    sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands')
-    plt.show()
+    plot = sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands')
+
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     print("Current Time =", current_time)
