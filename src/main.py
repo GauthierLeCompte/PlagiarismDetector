@@ -351,6 +351,21 @@ if __name__ == '__main__':
 
     plot = sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands')
 
+    x_coord = []
+    y_coord = []
+
+    for pair1 in candidate_pairs:
+        score = jaccard[pair1]
+        x_coord.append(score)
+        y_coord.append(1)
+
+    for pair2 in candidate_pairs:
+        score = jaccard[pair2]
+        x_coord.append(score)
+        y_coord.append(0)
+
+    plt.scatter(x_coord, y_coord)
+    plt.show()
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     print("Current Time =", current_time)
