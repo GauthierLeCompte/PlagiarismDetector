@@ -196,16 +196,17 @@ def find_candidate_pairs(subvectors):
         for article2 in subvectors:
             if article1 != article2:
                 match = False
-                for subvec1, subvec2 in zip(subvectors[article1], subvectors[article2]):
-                    temp_tuple1 = (article1, article2)
-                    temp_tuple2 = (article2, article1)
-                    if subvec1 == subvec2:
-                        match += True
-                        if temp_tuple1 in candidates or temp_tuple2 in candidates:
-                            pass
-                        else:
-                            candidates.add(temp_tuple1)
-                        break
+                for subvec1 in subvectors[article1]:
+                    for subvec2 in subvectors[article2]:
+                        temp_tuple1 = (article1, article2)
+                        temp_tuple2 = (article2, article1)
+                        if subvec1 == subvec2:
+                            match += True
+                            if temp_tuple1 in candidates or temp_tuple2 in candidates:
+                                pass
+                            else:
+                                candidates.add(temp_tuple1)
+                            break
                 if not match:
                     if temp_tuple1 in non_candidates or temp_tuple2 in non_candidates:
                         pass
@@ -310,7 +311,7 @@ if __name__ == '__main__':
     ### Locality Sensetive Hashing
     subvectors = {}
     for signature_id in signatures:
-        subvectors[signature_id] = create_subvectors(signatures[signature_id], 10)
+        subvectors[signature_id] = create_subvectors(signatures[signature_id], 3)
     print(f"Subvectors created\n")
 
     candidate_pairs, non_candidate_pairs = find_candidate_pairs(subvectors)
