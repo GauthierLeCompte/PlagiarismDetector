@@ -131,7 +131,6 @@ def one_hot_encoding(vocab, articles):
                 temp_hot_encoded.append(1)
             else:
                 temp_hot_encoded.append(0)
-
         hot_encoded_articles[article_id] = temp_hot_encoded
 
     return hot_encoded_articles
@@ -301,7 +300,7 @@ if __name__ == '__main__':
     print(f"Signatures created\n")
 
     ### Jaccard with hot encoded articles
-    jaccard2 = run_jaccard(hot_encoded_articles, False)
+    jaccard2 = run_jaccard(hot_encoded_articles, True)
     print(f"Ran Jaccard 2\n")
 
     ### Create barplot
@@ -311,7 +310,7 @@ if __name__ == '__main__':
     ### Locality Sensetive Hashing
     subvectors = {}
     for signature_id in signatures:
-        subvectors[signature_id] = create_subvectors(signatures[signature_id], 3)
+        subvectors[signature_id] = create_subvectors(signatures[signature_id], 10)
     print(f"Subvectors created\n")
 
     candidate_pairs, non_candidate_pairs = find_candidate_pairs(subvectors)
