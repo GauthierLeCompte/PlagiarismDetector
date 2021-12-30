@@ -273,26 +273,64 @@ def bar_plot(jaccard):
              edgecolor='k',
              alpha=0.5)
 
-
     ax.set_xlabel("Similarity between chapters (in %)")
     ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
     ax.set_ylabel("Number of chapters")
     ax.set_yscale('log')
-    ax.set_title("\n".join(wrap(
-        "Number of chapters in function of their similarity witch each other (using 1000 articles)",
-        60)))
+    ax.set_title("\n".join(wrap("Number of chapters in function of their similarity witch each other (using 1000 articles)", 60)))
     rects = ax.patches
     labels = percentlist
     print(percentlist, "===========================")
 
     for rect, label in zip(rects, labels):
         height = rect.get_height()
-        ax.text(rect.get_x() + rect.get_width() / 2, height + 0.01, label,
-                ha='center', va='bottom')
+        ax.text(rect.get_x() + rect.get_width() / 2, height + 0.01, label, ha='center', va='bottom')
 
     plt.savefig("histScore_shinling2Copy.png")
     plt.show()
     return valuelist
+
+def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
+    results = pd.DataFrame({
+        'similarity': [],
+        'probability': [],
+        'rows, bands': []
+    })
+
+    fig, axs = plt.subplots()
+    for similarity in np.arange(0.01, 1, 0.01):
+        total = SIGNATURE_LENGTH
+        for band in [100,50,25, 20, 15, 10, 5, 2, 1]:
+            rows = int(total / band)
+            probability = calc_probability(similarity, rows, band)
+            results = results.append({
+                'similarity': similarity,
+                'probability': probability,
+                'rows, bands': f"{rows},{band}"},
+                ignore_index=True)
+
+    plot = sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands', ax=axs)
+    axs2 = axs.twinx()
+
+    x_coord = []
+    y_coord = []
+    for pair1 in candidate_pairs:
+        score = jaccard[pair1]
+        x_coord.append(score)
+        y_coord.append(1)
+
+    for pair2 in non_candidate_pairs:
+        score = jaccard[pair2]
+        x_coord.append(score)
+        y_coord.append(0)
+
+    axs2.scatter(x_coord, y_coord, s=3 , c="black")
+    axs2.set_ylabel("candidates")
+    axs2.set_yticks(np.arange(0, 1.1, 1.0))
+    axs.set_title("\n".join(wrap("", 60)))
+
+
+    plt.show()
 
 if __name__ == '__main__':
     now = datetime.now()
@@ -345,51 +383,6 @@ if __name__ == '__main__':
     ### Export results
     scores = export_results(candidate_pairs, jaccard, TRESHHOLD)
 
-    results = pd.DataFrame({
-        'similarity': [],
-        'probability': [],
-        'rows, bands': []
-    })
-
-    fig, axs = plt.subplots()
-    for similarity in np.arange(0.01, 1, 0.01):
-        total = SIGNATURE_LENGTH
-        for band in [100,50,25, 20, 15, 10, 5, 2, 1]:
-            rows = int(total / band)
-            probability = calc_probability(similarity, rows, band)
-            results = results.append({
-                'similarity': similarity,
-                'probability': probability,
-                'rows, bands': f"{rows},{band}"},
-                ignore_index=True)
-
-    plot = sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands', ax=axs)
-
-    axs2 = axs.twinx()
-
-    x_coord = []
-    y_coord = []
-
-    for pair1 in candidate_pairs:
-        score = jaccard[pair1]
-        x_coord.append(score)
-        y_coord.append(1)
-
-    for pair2 in non_candidate_pairs:
-        score = jaccard[pair2]
-        x_coord.append(score)
-        y_coord.append(0)
-    print(len(non_candidate_pairs), "noncandi")
-    print(len(candidate_pairs), "Candi")
-    axs2.scatter(x_coord, y_coord, s=3 , c="black")
-    axs2.set_ylabel("candidates")
-    axs2.set_yticks(np.arange(0, 1.1, 1.0))
-    axs.set_title("\n".join(wrap(
-        "",
-        60)))
-
-
-    plt.show()
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     print("Current Time =", current_time)
