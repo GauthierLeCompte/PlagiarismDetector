@@ -329,7 +329,6 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
     axs2.set_yticks(np.arange(0, 1.1, 1.0))
     axs.set_title("\n".join(wrap("", 60)))
 
-
     plt.show()
 
 if __name__ == '__main__':
