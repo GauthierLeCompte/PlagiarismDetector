@@ -9,6 +9,10 @@ from textwrap import wrap
 import seaborn as sns
 import pandas as pd
 
+BANDS = 10
+SHINGLES = 3
+SIGNATURE_LENGTH = 100
+TRESHHOLD = 0.7
 
 def parse_csv(article):
     """
@@ -27,7 +31,7 @@ def parse_csv(article):
     return articles
 
 
-def run_jaccard(articles, binary=False):
+def run_jaccard(articles):
     """
     Run jaccard similarity for all articles and call the function
     :return: dictionary where key's are the tuples and value the jaccard similarity
@@ -42,10 +46,7 @@ def run_jaccard(articles, binary=False):
                 if temp_tuple1 in jaccard or temp_tuple2 in jaccard:
                     pass
                 else:
-                    if not binary:
-                        jaccard[temp_tuple1] = jaccard_similarity(articles[article_id_1], articles[article_id_2])
-                    else:
-                        jaccard[temp_tuple1] = jaccard_similarity_binary((articles[article_id_1]), (articles[article_id_2]))
+                    jaccard[temp_tuple1] = jaccard_similarity(articles[article_id_1], articles[article_id_2])
 
     return jaccard
 
@@ -71,27 +72,29 @@ def jaccard_similarity(doc1, doc2):
     # using length of intersection set divided by length of union set
     return float(len(intersection)) / len(union)
 
-
-def jaccard_similarity_binary(article1, article2):
+def shingle2(articles, k):
     """
-    #TODO: Text hier nog aanpassen
-    Calculates the jaccard similarity between 2 articles
-    :param article1: article 1 we want to compare
-    :param article2: article 1 we want to compare
-    :return: jaccard similarity between article 1 and article 2
+    Shingling splits the text up into tokens of size k, with no duplicates
+    :param articles: The articles we want to split up
+    :param k: the length of the tokens
+    :return: Set of all the shingles
     """
-    union = 0
-    intersect = 0
-    maxlenght = len(article1)
-    for x in range(maxlenght):
-        i = article1[x]
-        j = article2[x]
-        if i == 1 or j == 1:
-            union +=1
-            if i == j:
-                intersect += 1
-    return float(intersect/union)
+    shingled_articles = {}
+    for id in articles:
+        shingle_set = set()
+        text = articles[id]
+        words = text.lower().split()
 
+        for i in range(len(words) - k):
+            newword= ""
+            for j in range(i,i+k):
+                newword += words[j]
+                newword += " "
+            newword = newword[:-1]
+            shingle_set.add(newword)
+        shingled_articles[id] = shingle_set
+
+    return shingled_articles
 
 def shingle(articles, k):
     """
@@ -238,10 +241,10 @@ def export_results(candidate_pairs, jaccard, similarity):
 
     with open('../output/results.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Document 1", "Document 2"])
+        writer.writerow(["Document 1", "Document 2", "score"])
 
         for pair in end_result:
-            writer.writerow([pair[0], pair[1]])
+            writer.writerow([pair[0], pair[1], end_result[pair]])
     return scores
 
 def calc_probability(similarity, rows, bands):
@@ -250,13 +253,19 @@ def calc_probability(similarity, rows, bands):
 def bar_plot(jaccard):
     # creating the dataset
     valuelist = []
+    percentlist = [0,0,0,0,0,0,0,0,0,0]
     for key in jaccard.keys():
         value = jaccard[key]
+        smallval = math.floor(value*10)
+        if smallval ==10:
+            smallval=9
+        percentlist[smallval]+=1
         valuelist.append(value*100)
 
     bin_edges = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    fig, ax = plt.subplots(1, 1)
 
-    plt.hist(valuelist,
+    ax.hist(valuelist,
              bins=bin_edges,
              density=False,
              histtype='bar',
@@ -265,17 +274,24 @@ def bar_plot(jaccard):
              alpha=0.5)
 
 
-    plt.xlabel("Similarity between chapters (in %)")
-    plt.xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
-    plt.ylabel("Number of chapters")
-    plt.yscale('log')
-    plt.title("Number of chapters in function of their similarity witch each other (using +-1000 articles)")
-    title = plt.title("\n".join(wrap(
-        "Number of chapters in function of their similarity witch each other (using +-1000 articles)",
+    ax.set_xlabel("Similarity between chapters (in %)")
+    ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+    ax.set_ylabel("Number of chapters")
+    ax.set_yscale('log')
+    ax.set_title("\n".join(wrap(
+        "Number of chapters in function of their similarity witch each other (using 1000 articles)",
         60)))
+    rects = ax.patches
+    labels = percentlist
+    print(percentlist, "===========================")
 
+    for rect, label in zip(rects, labels):
+        height = rect.get_height()
+        ax.text(rect.get_x() + rect.get_width() / 2, height + 0.01, label,
+                ha='center', va='bottom')
+
+    plt.savefig("histScore_shinling2Copy.png")
     plt.show()
-    plt.savefig("histScore_shinling2.png")
     return valuelist
 
 if __name__ == '__main__':
@@ -291,7 +307,7 @@ if __name__ == '__main__':
 
     jaccard = run_jaccard(articles)
     ### Shingles
-    shingled_articles = shingle(articles, 2)
+    shingled_articles = shingle(articles, SHINGLES)
     print(f"Length Shingles {len(shingled_articles)}\n")
 
     ### Generate vocabulary
@@ -303,17 +319,13 @@ if __name__ == '__main__':
     print(f"Length Hot Encoded Articles {len(hot_encoded_articles)}\n")
 
     ### Min Hash
-    minhash_func = build_minhash_func(vocabulary, 25)
+    minhash_func = build_minhash_func(vocabulary, SIGNATURE_LENGTH)
     print(f"Minhash function calculated\n")
 
     signatures = {}
     for article_id in hot_encoded_articles:
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
     print(f"Signatures created\n")
-
-    ### Jaccard with hot encoded articles
-    jaccard2 = run_jaccard(hot_encoded_articles, True)
-    print(f"Ran Jaccard 2\n")
 
     ### Create barplot
     valuelist = bar_plot(jaccard)
@@ -322,7 +334,7 @@ if __name__ == '__main__':
     ### Locality Sensetive Hashing
     subvectors = {}
     for signature_id in signatures:
-        subvectors[signature_id] = create_subvectors(signatures[signature_id], 10)
+        subvectors[signature_id] = create_subvectors(signatures[signature_id], BANDS)
     print(f"Subvectors created\n")
 
     candidate_pairs, non_candidate_pairs = find_candidate_pairs(subvectors)
@@ -331,16 +343,18 @@ if __name__ == '__main__':
     print(f"Lenght both: {len(candidate_pairs) + len(non_candidate_pairs)}")
 
     ### Export results
-    scores = export_results(candidate_pairs, jaccard, 0.8)
+    scores = export_results(candidate_pairs, jaccard, TRESHHOLD)
 
     results = pd.DataFrame({
         'similarity': [],
         'probability': [],
         'rows, bands': []
     })
-    for similarity in scores:
-        total = 100
-        for band in [100, 50, 25, 20, 10, 5, 4, 2, 1]:
+
+    fig, axs = plt.subplots()
+    for similarity in np.arange(0.01, 1, 0.01):
+        total = SIGNATURE_LENGTH
+        for band in [100,50,25, 20, 15, 10, 5, 2, 1]:
             rows = int(total / band)
             probability = calc_probability(similarity, rows, band)
             results = results.append({
@@ -349,7 +363,9 @@ if __name__ == '__main__':
                 'rows, bands': f"{rows},{band}"},
                 ignore_index=True)
 
-    plot = sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands')
+    plot = sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands', ax=axs)
+
+    axs2 = axs.twinx()
 
     x_coord = []
     y_coord = []
@@ -359,12 +375,20 @@ if __name__ == '__main__':
         x_coord.append(score)
         y_coord.append(1)
 
-    for pair2 in candidate_pairs:
+    for pair2 in non_candidate_pairs:
         score = jaccard[pair2]
         x_coord.append(score)
         y_coord.append(0)
+    print(len(non_candidate_pairs), "noncandi")
+    print(len(candidate_pairs), "Candi")
+    axs2.scatter(x_coord, y_coord, s=3 , c="black")
+    axs2.set_ylabel("candidates")
+    axs2.set_yticks(np.arange(0, 1.1, 1.0))
+    axs.set_title("\n".join(wrap(
+        "",
+        60)))
 
-    plt.scatter(x_coord, y_coord)
+
     plt.show()
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
