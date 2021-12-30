@@ -1,7 +1,6 @@
 import csv
 import math
 from random import shuffle
-# import matplotlib.pyplot as plt
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,9 +9,10 @@ import seaborn as sns
 import pandas as pd
 
 BANDS = 10
-SHINGLES = 3
+SHINGLES = 2
 SIGNATURE_LENGTH = 100
-TRESHHOLD = 0.7
+TRESHHOLD = 0.8
+SMALLINPUT = False
 
 def parse_csv(article):
     """
@@ -309,7 +309,7 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
                 'rows, bands': f"{rows},{band}"},
                 ignore_index=True)
 
-    plot = sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands', ax=axs)
+    sns.lineplot(data=results, x='similarity', y='probability', hue='rows, bands', ax=axs)
     axs2 = axs.twinx()
 
     x_coord = []
@@ -328,6 +328,7 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
     axs2.set_ylabel("candidates")
     axs2.set_yticks(np.arange(0, 1.1, 1.0))
     axs.set_title("\n".join(wrap("", 60)))
+    plt.savefig("candidateProb_shinling2Copy.png")
 
     plt.show()
 
@@ -339,10 +340,14 @@ if __name__ == '__main__':
     large = "../input/news_articles_large.csv"
 
     ### Parsing
-    articles = parse_csv(small)
+    if SMALLINPUT:
+        articles = parse_csv(small)
+    else:
+        articles = parse_csv(large)
     print(f"Articles Parsed\n")
 
     jaccard = run_jaccard(articles)
+    print("jaccard calculated \n")
     ### Shingles
     shingled_articles = shingle(articles, SHINGLES)
     print(f"Length Shingles {len(shingled_articles)}\n")
@@ -381,7 +386,7 @@ if __name__ == '__main__':
 
     ### Export results
     scores = export_results(candidate_pairs, jaccard, TRESHHOLD)
-
+    plot_candidate_probability(candidate_pairs, non_candidate_pairs)
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     print("Current Time =", current_time)
