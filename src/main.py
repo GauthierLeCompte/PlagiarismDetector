@@ -13,7 +13,7 @@ SHINGLES = 2
 SIGNATURE_LENGTH = 100
 TRESHHOLD = 0.8
 SMALLINPUT = False
-RECALCULATE_JACCARD = False
+RECALCULATE_JACCARD = True
 
 
 def parse_csv(article):
@@ -355,7 +355,9 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
 
 
 if __name__ == '__main__':
-    os.mkdir("../Output")
+    if not os.path.exists('../output'):
+        os.mkdir('../output')
+
     small = "../input/news_articles_small.csv"
     large = "../input/news_articles_large.csv"
 
@@ -369,10 +371,12 @@ if __name__ == '__main__':
     ### Calculate Jaccard
     if RECALCULATE_JACCARD:
         jaccard = run_jaccard(articles)
+        print("jaccard calculated \n")
         export_jaccard(jaccard)
+        print("jaccard exported \n")
     else:
         jaccard = parse_csv("../output/jaccard.csv")
-    print("jaccard calculated \n")
+        print("jaccard calculated \n")
 
     ### Shingles
     shingled_articles = shingle(articles, SHINGLES)
