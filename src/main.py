@@ -14,6 +14,7 @@ SIGNATURE_LENGTH = 100
 TRESHHOLD = 0.8
 SMALLINPUT = False
 
+
 def parse_csv(article):
     """
     Parse the given CSV file
@@ -143,6 +144,7 @@ def build_minhash_func(vocabulary, amount_hashes):
         hashes.append(shuffled_vocab)
     return hashes
 
+
 def create_hash(hot_encoded_article, minhash_func, vocab):
     """
     Creates the signature or an hot encoded article (does the matching process)
@@ -161,6 +163,7 @@ def create_hash(hot_encoded_article, minhash_func, vocab):
                 break
     return signature
 
+
 def create_subvectors(signature, band):
     """
     Creates subvectors of the signature vector
@@ -172,6 +175,7 @@ def create_subvectors(signature, band):
     subvectors = [signature[i * length // band: (i + 1) * length // band] for i in range(band)]
 
     return subvectors
+
 
 def find_candidate_pairs(subvectors):
     """
@@ -205,6 +209,7 @@ def find_candidate_pairs(subvectors):
 
     return candidates, non_candidates
 
+
 def export_results(candidate_pairs, jaccard, similarity):
     end_result = {}
     scores = []
@@ -223,8 +228,19 @@ def export_results(candidate_pairs, jaccard, similarity):
             writer.writerow([pair[0], pair[1], end_result[pair]])
     return scores
 
+
+def export_jaccard(jaccard):
+    with open('../output/jaccard.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Pair", "Score"])
+
+        for pair in jaccard:
+            writer.writerow([pair, jaccard[pair]])
+
+
 def calc_probability(similarity, rows, bands):
     return 1 - (1 - similarity ** rows) ** bands
+
 
 def bar_plot(jaccard):
     # creating the dataset
@@ -265,6 +281,7 @@ def bar_plot(jaccard):
     plt.savefig("histScore_shinling2Copy.png")
     plt.show()
     return valuelist
+
 
 def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
     results = pd.DataFrame({
@@ -308,6 +325,7 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
 
     plt.show()
 
+
 if __name__ == '__main__':
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
@@ -323,6 +341,7 @@ if __name__ == '__main__':
     print(f"Articles Parsed\n")
 
     jaccard = run_jaccard(articles)
+    export_jaccard(jaccard)
     print("jaccard calculated \n")
     ### Shingles
     shingled_articles = shingle(articles, SHINGLES)
