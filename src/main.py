@@ -51,7 +51,7 @@ def run_jaccard(articles):
     return jaccard
 
 
-def jaccard_similarity(doc1, doc2):
+def jaccard_similarity(article1, article2):
     """
     Calculates the jaccard similarity between 2 articles
     :param article1: article 1 we want to compare
@@ -59,8 +59,8 @@ def jaccard_similarity(doc1, doc2):
     :return: jaccard similarity between article 1 and article 2
     """
     # List the unique words in a document
-    words_doc1 = set(doc1.lower().split())
-    words_doc2 = set(doc2.lower().split())
+    words_doc1 = set(article1.lower().split())
+    words_doc2 = set(article2.lower().split())
 
     # Find the intersection of words list of doc1 & doc2
     intersection = words_doc1.intersection(words_doc2)
@@ -72,29 +72,6 @@ def jaccard_similarity(doc1, doc2):
     # using length of intersection set divided by length of union set
     return float(len(intersection)) / len(union)
 
-def shingle2(articles, k):
-    """
-    Shingling splits the text up into tokens of size k, with no duplicates
-    :param articles: The articles we want to split up
-    :param k: the length of the tokens
-    :return: Set of all the shingles
-    """
-    shingled_articles = {}
-    for id in articles:
-        shingle_set = set()
-        text = articles[id]
-        words = text.lower().split()
-
-        for i in range(len(words) - k):
-            newword= ""
-            for j in range(i,i+k):
-                newword += words[j]
-                newword += " "
-            newword = newword[:-1]
-            shingle_set.add(newword)
-        shingled_articles[id] = shingle_set
-
-    return shingled_articles
 
 def shingle(articles, k):
     """
@@ -159,7 +136,6 @@ def build_minhash_func(vocabulary, amount_hashes):
     :param amount_hashes: The amount of hash vectors we want to create
     :return: list of hash vectors
     """
-    # function for building multiple minhash vectors
     hashes = []
     for i in range(amount_hashes):
         shuffled_vocab = list(range(1, len(vocabulary) + 1))
