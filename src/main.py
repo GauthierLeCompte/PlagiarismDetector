@@ -13,7 +13,7 @@ SHINGLES = 2
 SIGNATURE_LENGTH = 100
 TRESHHOLD = 0.8
 SMALLINPUT = False
-RECALCULATE_JACCARD = True
+RECALCULATE_JACCARD = False
 
 
 def parse_csv(article):
@@ -412,6 +412,7 @@ if __name__ == '__main__':
 
     ### Export results
     export_results(candidate_pairs, jaccard, TRESHHOLD)
+    print(f"Results written to csv file")
 
     ### Create plots
     valuelist = bar_plot(jaccard)
