@@ -193,15 +193,15 @@ def find_candidate_pairs(subvectors):
                 match = False
                 temp_tuple1 = (article1, article2)
                 temp_tuple2 = (article2, article1)
-                for subvec1 in subvectors[article1]:
-                    for subvec2 in subvectors[article2]:
-                        if subvec1 == subvec2:
-                            match += True
-                            if temp_tuple1 in candidates or temp_tuple2 in candidates:
-                                pass
-                            else:
-                                candidates.add(temp_tuple1)
-                            break
+
+                for subvec1, subvec2 in zip(subvectors[article1], subvectors[article2]):
+                    if subvec1 == subvec2:
+                        match += True
+                        if temp_tuple1 in candidates or temp_tuple2 in candidates:
+                            pass
+                        else:
+                            candidates.add(temp_tuple1)
+                        break
                 if not match:
                     if temp_tuple1 in non_candidates or temp_tuple2 in non_candidates:
                         pass
