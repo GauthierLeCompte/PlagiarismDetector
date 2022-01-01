@@ -1,18 +1,19 @@
 import csv
 import math
 from random import shuffle
-from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from textwrap import wrap
 import seaborn as sns
 import pandas as pd
+import os
 
 BANDS = 10
 SHINGLES = 2
 SIGNATURE_LENGTH = 100
 TRESHHOLD = 0.8
 SMALLINPUT = False
+RECALCULATE_JACCARD = False
 
 
 def parse_csv(article):
@@ -34,7 +35,7 @@ def parse_csv(article):
 
 def run_jaccard(articles):
     """
-    Run jaccard similarity for all articles and call the function
+    Run jaccard similarity for all articles and call the function which does the effective calculation
     :return: dictionary where key's are the tuples and value the jaccard similarity
     """
     jaccard = {}
@@ -211,6 +212,13 @@ def find_candidate_pairs(subvectors):
 
 
 def export_results(candidate_pairs, jaccard, similarity):
+    """
+    Calculates all the candidate pairs which are above a certain similarity treshhold and adds it to a results
+    dictionary where the key is the pair and the value is the score.
+    :param candidate_pairs: Dictionary of all the candidate pairs
+    :param jaccard: Jaccard dictionary which is used as ground_truth
+    :param similarity: The given similarity treshhoold
+    """
     end_result = {}
     scores = []
     for pair in candidate_pairs:
@@ -226,10 +234,15 @@ def export_results(candidate_pairs, jaccard, similarity):
 
         for pair in end_result:
             writer.writerow([pair[0], pair[1], end_result[pair]])
-    return scores
 
 
 def export_jaccard(jaccard):
+    """
+    Function specifically designed for the jaccard function. This function writes in the generated jaccard dictionary
+    to a csv file. This is done because the jaccard function is a very time consuming process and with this function
+    we can just read it in which saves a lot of time.
+    :param jaccard: The jaccard dictionary
+    """
     with open('../output/jaccard.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Pair", "Score"])
@@ -239,11 +252,21 @@ def export_jaccard(jaccard):
 
 
 def calc_probability(similarity, rows, bands):
+    """
+    Calculates probability
+    :param similarity: The given similiary treshhold
+    :param rows: The rows of the vector
+    :param bands: The bands amount
+    :return: the probability
+    """
     return 1 - (1 - similarity ** rows) ** bands
 
 
 def bar_plot(jaccard):
-    # creating the dataset
+    """
+    Creates barplot for the jaccard similarity of each article pair
+    :param jaccard: Jaccard dictionary
+    """
     valuelist = []
     percentlist = [0,0,0,0,0,0,0,0,0,0]
     for key in jaccard.keys():
@@ -284,6 +307,11 @@ def bar_plot(jaccard):
 
 
 def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
+    """
+    Plots the candidate probability chart
+    :param candidate_pairs: Dictionary of all candidate pairs
+    :param non_candidate_pairs: Dictionary of all the non candidate pairs
+    """
     results = pd.DataFrame({
         'similarity': [],
         'probability': [],
@@ -327,9 +355,7 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
 
 
 if __name__ == '__main__':
-    now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time)
+    os.mkdir("../Output")
     small = "../input/news_articles_small.csv"
     large = "../input/news_articles_large.csv"
 
@@ -340,9 +366,14 @@ if __name__ == '__main__':
         articles = parse_csv(large)
     print(f"Articles Parsed\n")
 
-    jaccard = run_jaccard(articles)
-    export_jaccard(jaccard)
+    ### Calculate Jaccard
+    if RECALCULATE_JACCARD:
+        jaccard = run_jaccard(articles)
+        export_jaccard(jaccard)
+    else:
+        jaccard = parse_csv("../output/jaccard.csv")
     print("jaccard calculated \n")
+
     ### Shingles
     shingled_articles = shingle(articles, SHINGLES)
     print(f"Length Shingles {len(shingled_articles)}\n")
@@ -364,10 +395,6 @@ if __name__ == '__main__':
         signatures[article_id] = create_hash(hot_encoded_articles[article_id], minhash_func, vocabulary)
     print(f"Signatures created\n")
 
-    ### Create barplot
-    valuelist = bar_plot(jaccard)
-    print(f"plot created")
-
     ### Locality Sensetive Hashing
     subvectors = {}
     for signature_id in signatures:
@@ -380,8 +407,9 @@ if __name__ == '__main__':
     print(f"Lenght both: {len(candidate_pairs) + len(non_candidate_pairs)}")
 
     ### Export results
-    scores = export_results(candidate_pairs, jaccard, TRESHHOLD)
+    export_results(candidate_pairs, jaccard, TRESHHOLD)
+
+    ### Create plots
+    valuelist = bar_plot(jaccard)
     plot_candidate_probability(candidate_pairs, non_candidate_pairs)
-    now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time)
+    print(f"Plots created")
