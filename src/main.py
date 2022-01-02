@@ -7,13 +7,14 @@ from textwrap import wrap
 import seaborn as sns
 import pandas as pd
 import os
+import datetime
 
-BANDS = 10
+BANDS = 15
 SHINGLES = 2
-SIGNATURE_LENGTH = 100
+SIGNATURE_LENGTH = 200
 TRESHHOLD = 0.8
-SMALLINPUT = False
-RECALCULATE_JACCARD = False
+SMALLINPUT = True
+RECALCULATE_JACCARD = True
 
 
 def parse_csv(article):
@@ -32,6 +33,25 @@ def parse_csv(article):
             line_count += 1
     return articles
 
+def parse_jaccard_csv(article):
+    """
+    Parse the given CSV file
+    :param article: The small or large CSV file given as parameter
+    :return: dictionary of articles where the key is the article number and the value the text of the article
+    """
+    articles = {}
+    with open(article) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count != 0:
+                pair = row[0]
+                pair = pair[1:-1]
+                first, second = pair.split(',')
+                newpair = (first, second[1:])
+                articles[newpair] = float(row[1])
+            line_count += 1
+    return articles
 
 def run_jaccard(articles):
     """
@@ -243,12 +263,13 @@ def export_jaccard(jaccard):
     we can just read it in which saves a lot of time.
     :param jaccard: The jaccard dictionary
     """
-    with open('../output/jaccard.csv', 'w', newline='') as file:
+    with open('../output/jaccard2.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Pair", "Score"])
 
         for pair in jaccard:
-            writer.writerow([pair, jaccard[pair]])
+            newpair =  (int(pair[0]), int(pair[1]))
+            writer.writerow([newpair, jaccard[pair]])
 
 
 def calc_probability(similarity, rows, bands):
@@ -355,6 +376,10 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
 
 
 if __name__ == '__main__':
+
+    currentime = datetime.datetime.now()
+    print(currentime)
+
     if not os.path.exists('../output'):
         os.mkdir('../output')
 
@@ -375,9 +400,11 @@ if __name__ == '__main__':
         export_jaccard(jaccard)
         print("jaccard exported \n")
     else:
-        jaccard = parse_csv("../output/jaccard.csv")
+        jaccard = parse_jaccard_csv("../output/jaccard2.csv")
         print("jaccard calculated \n")
 
+    currentime = datetime.datetime.now()
+    print(currentime, "after jaccard")
     ### Shingles
     shingled_articles = shingle(articles, SHINGLES)
     print(f"Length Shingles {len(shingled_articles)}\n")
@@ -418,3 +445,5 @@ if __name__ == '__main__':
     valuelist = bar_plot(jaccard)
     plot_candidate_probability(candidate_pairs, non_candidate_pairs)
     print(f"Plots created")
+    currentime = datetime.datetime.now()
+    print(currentime)
