@@ -13,8 +13,8 @@ BANDS = 15
 SHINGLES = 2
 SIGNATURE_LENGTH = 200
 TRESHHOLD = 0.8
-SMALLINPUT = False
-RECALCULATE_JACCARD = True
+SMALLINPUT = True
+RECALCULATE_JACCARD = False
 
 
 def parse_csv(article):
@@ -75,24 +75,18 @@ def run_jaccard(articles):
 
 def jaccard_similarity(article1, article2):
     """
+    Code based on https://studymachinelearning.com/jaccard-similarity-text-similarity-metric-in-nlp/
     Calculates the jaccard similarity between 2 articles
     :param article1: article 1 we want to compare
     :param article2: article 2 we want to compare
     :return: jaccard similarity between article 1 and article 2
     """
-    # List the unique words in a document
-    words_doc1 = set(article1.lower().split())
-    words_doc2 = set(article2.lower().split())
-
-    # Find the intersection of words list of doc1 & doc2
-    intersection = words_doc1.intersection(words_doc2)
-
-    # Find the union of words list of doc1 & doc2
-    union = words_doc1.union(words_doc2)
-
-    # Calculate Jaccard similarity score
-    # using length of intersection set divided by length of union set
-    return float(len(intersection)) / len(union)
+    words1 = set(article1.lower().split())
+    words2 = set(article2.lower().split())
+    intersection = words1.intersection(words2)
+    union = words1.union(words2)
+    similarity = float(len(intersection)) / len(union)
+    return similarity
 
 
 def shingle(articles, k):
@@ -248,7 +242,7 @@ def export_results(candidate_pairs, jaccard, similarity):
             end_result[pair] = score
             scores.append(score)
 
-    with open('../output/results.csv', 'w', newline='') as file:
+    with open(f'../output/results{SHINGLES}_{int(TRESHHOLD*100)}.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Document 1", "Document 2", "score"])
 
@@ -263,7 +257,7 @@ def export_jaccard(jaccard):
     we can just read it in which saves a lot of time.
     :param jaccard: The jaccard dictionary
     """
-    with open('../output/jaccard2.csv', 'w', newline='') as file:
+    with open(f'../output/jaccard.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Pair", "Score"])
 
@@ -313,17 +307,15 @@ def bar_plot(jaccard):
     ax.set_xticks([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
     ax.set_ylabel("Number of chapters")
     ax.set_yscale('log')
-    ax.set_title("\n".join(wrap("Number of chapters in function of their similarity witch each other (using 1000 articles)", 60)))
+    ax.set_title("\n".join(wrap("Number of chapters in function of their similarity with each other", 60)))
     rects = ax.patches
     labels = percentlist
-    print(percentlist, "===========================")
 
     for rect, label in zip(rects, labels):
         height = rect.get_height()
         ax.text(rect.get_x() + rect.get_width() / 2, height + 0.01, label, ha='center', va='bottom')
 
-    plt.savefig("histScore_shinling2Copy.png")
-    plt.show()
+    plt.savefig(f"../output/histScore_shinling.png")
     return valuelist
 
 
@@ -370,10 +362,7 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
     axs2.set_ylabel("candidates")
     axs2.set_yticks(np.arange(0, 1.1, 1.0))
     axs.set_title("\n".join(wrap("", 60)))
-    plt.savefig("candidateProb_shinling2Copy.png")
-
-    plt.show()
-
+    plt.savefig(f"../output/candidateProb_shinling.png")
 
 if __name__ == '__main__':
 
@@ -400,11 +389,9 @@ if __name__ == '__main__':
         export_jaccard(jaccard)
         print("jaccard exported \n")
     else:
-        jaccard = parse_jaccard_csv("../output/jaccard2.csv")
+        jaccard = parse_jaccard_csv("../output/jaccard.csv")
         print("jaccard calculated \n")
 
-    currentime = datetime.datetime.now()
-    print(currentime, "after jaccard")
     ### Shingles
     shingled_articles = shingle(articles, SHINGLES)
     print(f"Length Shingles {len(shingled_articles)}\n")
