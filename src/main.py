@@ -9,10 +9,10 @@ import pandas as pd
 import os
 import datetime
 
-BANDS = 15
-SHINGLES = 2
-SIGNATURE_LENGTH = 200
-TRESHHOLD = 0.8
+BANDS = 20
+SHINGLES = 4
+SIGNATURE_LENGTH = 100
+TRESHHOLD = 0.25
 SMALLINPUT = True
 RECALCULATE_JACCARD = False
 
@@ -242,7 +242,7 @@ def export_results(candidate_pairs, jaccard, similarity):
             end_result[pair] = score
             scores.append(score)
 
-    with open(f'../output/results{SHINGLES}_{int(TRESHHOLD*100)}.csv', 'w', newline='') as file:
+    with open(f'../output/results_{SHINGLES}_{int(TRESHHOLD*100)}.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Document 1", "Document 2", "score"])
 
@@ -315,7 +315,7 @@ def bar_plot(jaccard):
         height = rect.get_height()
         ax.text(rect.get_x() + rect.get_width() / 2, height + 0.01, label, ha='center', va='bottom')
 
-    plt.savefig(f"../output/histScore_shinling.png")
+    plt.savefig(f"../output/histScore_shinling_{SHINGLES}_{int(TRESHHOLD*100)}.png")
     return valuelist
 
 
@@ -362,7 +362,7 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
     axs2.set_ylabel("candidates")
     axs2.set_yticks(np.arange(0, 1.1, 1.0))
     axs.set_title("\n".join(wrap("", 60)))
-    plt.savefig(f"../output/candidateProb_shinling.png")
+    plt.savefig(f"../output/candidateProb_shinling_{SHINGLES}_{int(TRESHHOLD*100)}.png")
 
 if __name__ == '__main__':
 
