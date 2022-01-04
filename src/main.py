@@ -322,6 +322,7 @@ def bar_plot(jaccard):
 def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
     """
     Plots the candidate probability chart
+    Code based on: https://github.com/pinecone-io/examples/blob/master/locality_sensitive_hashing_traditional/sparse_implementation.ipynb
     :param candidate_pairs: Dictionary of all candidate pairs
     :param non_candidate_pairs: Dictionary of all the non candidate pairs
     """
@@ -365,7 +366,6 @@ def plot_candidate_probability(candidate_pairs, non_candidate_pairs):
     plt.savefig(f"../output/candidateProb_shinling.png")
 
 if __name__ == '__main__':
-
     currentime = datetime.datetime.now()
     print(currentime)
 
